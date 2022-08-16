@@ -1,0 +1,130 @@
+---
+title: "Day 6 EDS 221 Task"
+author: "Dalila Lara"
+date: "2022-08-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(tidyverse)
+library(janitor)
+```
+# Task 2 SBC Lobsters 
+
+Read data in, note na values, update line for na values, convert names to lower case, convert using uncount()
+```{r}
+#uncount() gives each observation its own row
+lobsters <- read_csv(here("data","Lobster_Abundance_All_Years_20210412.csv"), na = c("-99999", "")) %>% 
+  clean_names() %>% 
+  uncount(count)
+```
+
+Counts and mean sizes by site & year
+```{r}
+#makes table to summarize data 
+lobsters_c_yr <- lobsters |>
+  group_by(site, year) |>
+  summarize(mean_length = mean(size_mm),
+            counts = n())
+  
+
+#make graph of summarized data 
+ggplot(data = lobsters_c_yr, 
+       aes(x = year, y = counts)) +
+  geom_line(aes(color = site)) #+
+  #facet_wrap(~site) +
+
+```
+
+Create a subset of 2020 data
+```{r}
+lobsters2020 <- lobsters |>
+  filter(year == 2020)
+```
+
+Find counts of lobster at each site group_by()
+legal "yes" "no"
+```{r}
+lobsters_c_2020 <- lobsters |>
+  filter(year == 2020) |>
+  mutate(legal = case_when(size_mm >= 79.76 ~ "Yes", TRUE ~ "No")) |>
+  group_by(site, legal) |>
+  summarize(counts = n())
+```
+
+Create stacked column graph
+```{r}
+ggplot(data = lobsters_c_2020, aes( x = site, y = counts)) +
+  geom_col(position = "fill",
+    aes(fill = legal)) 
+```
+Which two sites had the largest proportion of legal lobsters in 2020? Explore the metadata to come up with a hypothesis about why that might be.
+
+  In 2020 site NAPL & IVEE site had the largest proportion of legal lobsters.
+  
+## Task 3 Random lobster wrangling
+filter() practice
+
+```{r}
+# Subset with data from three specified sites
+ex_a <- lobsters |>
+  filter(site == c("IVEE", "CARP", "NAPL"))
+
+unique(ex_a$site)
+```
+
+
+```{r}
+# Subset with only lobsters in august
+ex_b <- lobsters |>
+  filter(month == 8)
+```
+
+```{r}
+# Subset with lobsters @ AQUE or carspace length > 70mm
+ex_c <- lobsters |>
+  filter(site == "AQUE" | size_mm > 70)
+```
+
+```{r}
+# subset with no NAPL as site
+ex_d <- lobsters |>
+  filter(!site %in% "NAPL")
+
+#check 
+unique(ex_d$site)
+```
+
+```{r}
+#group_by() %>% summarize() practice
+ex_e <- lobsters |>
+  group_by(size_mm, site) |>
+  summarize(mean(size_mm, na.rm = TRUE),
+            sd(size_mm, na.rm = TRUE))
+```
+
+```{r}
+#find max carspace length by site and month
+ex_f <- lobsters |>
+  group_by(site, month) |>
+  summarize(max(size_mm))
+```
+
+```{r}
+#mutate practice 
+# new column that contain length converted to centimeters 
+ex_g <- lobsters |>
+  mutate(size_cm = size_mm * 100 * 1000) 
+
+#site column to lower case
+ex_h <- lobsters |>
+  mutate(site = tolower(site))
+  
+#convert area column to character 
+ex_i <- lobsters |> 
+  mutate(area = as.character(area))
+```
+
+
